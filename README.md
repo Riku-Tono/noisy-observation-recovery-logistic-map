@@ -19,7 +19,7 @@ The most important results are not "Feigenbaum-like quantities were recovered", 
 1. The fixed Observer's breakdown could not be reduced to a single shared mechanism (33 of the 80 attribution rows are simultaneous failures at the same depth, i.e. TIE).
 2. The Observer's `ESTIMATE` label is not a guarantee that true finite-level structure was recovered. The "loss by abstention only" property observed on the coarse grid did not extend unchanged to the refined grid.
 
-In Phase B2, one false acceptance was observed for `delta_3` at seed 41014 and sigma 1.6e-9. For the limited replay / Decimal diagnostic on the stored input, see `INCIDENT_41014_NOTE.md`.
+In Phase B2, one false acceptance was observed for `delta_3` at seed 41014 and sigma 1.6e-9. For the limited replay / Decimal diagnostic on the stored input, see `INCIDENT_41014_NOTE.md`; for the fixed-runtime reproduction of the local acceptance path for that same stored input, see §7.1.
 
 ---
 
@@ -253,6 +253,124 @@ In Phase B2, one false acceptance was observed for `delta_3` at seed 41014 and s
 **What this one case shows (limited)**: the fixed Observer's `ESTIMATE` label does not mean that true finite-level structure was safely recovered.
 **What it does not show**: the error probability at this sigma, reproducibility at other seeds, a defect of the Observer as a whole, or that noise created a genuinely new bifurcation.
 
+### 7.1 Fixed-runtime reproduction of the local acceptance path
+
+On 2026-08-12 the local stored-data path
+
+```
+observed value pair -> period residual -> threshold decision -> period label -> bracket candidate -> delta_3
+```
+
+was re-executed once for this same stored input in the original fixed runtime (CPython `3.13.15`, NumPy `2.3.2`, frozen `observer.py` SHA-256 `A72C880213D617C9479D8F4C9DFD3E7F277169CBB236FB9C4EDFEE0B800D7EB4`). The incident input was reconstructed from the existing A3 payload and the existing seed-41014 noise slice; the truth and the Scorer were neither read nor used; no new seed and no new simulation were introduced. Source: `SEED_41014_FIXED_RUNTIME_LOCAL_PATH_REPRODUCTION.txt`.
+
+This is not a new Phase, not a new simulation, not a formal third-party forensic examination, and not the discovery of a general failure mechanism.
+
+All checks in that execution reported `True`, and the final status was `PASS`: the frozen Observer output matched the official raw Observer record; the frozen incident labels matched the stored B2 trace; the frozen zero-noise labels matched the stored zero reference; a small independent residual/label calculation matched the frozen Observer; independently enumerated bracket candidates matched the stored and frozen path; and the independent residual arrays matched the stored trace arrays.
+
+Exactly four of the 6201 grid points changed period label relative to the zero-noise reference:
+
+| `j` | `v` | Label change |
+|---|---|---|
+| 126 | `0.020322580645161289` | `1 -> 2` |
+| 3116 | `0.50258064516129031` | `2 -> 4` |
+| 4994 | `0.80548387096774199` | `4 -> 8` |
+| 5941 | `0.95822580645161293` | `8 -> 0` |
+
+The threshold was `tau = 1.00000000000000002e-08` for both the zero-noise and the incident array.
+
+At the two points that govern the `b_2` candidate set:
+
+| Point | Period that failed | residual − tau | Period that passed | Maximum-residual pair | Zero-noise difference | Noise difference |
+|---|---|---|---|---|---|---|
+| `j=3116` | 2 (`1.09344222565255222e-8`) | `+9.34422256525522034e-10` | 4 (`6.92810875335680976e-9`) | `t=31`, `t+2=33` | `0` | `-1.09344221885107072e-8` |
+| `j=4994` | 4 (`1.01635164173607961e-8`) | `+1.63516417360795931e-10` | 8 (`9.49821643558834694e-9`) | `t=16`, `t+4=20` | `+1.61993712888275354e-9` | `+8.54357929372000360e-9` |
+
+At `j=3116` the zero-noise contribution to the maximum pair is exactly `0`, so the period-2 threshold crossing for that pair is essentially the noise difference alone. At `j=4994` the observed signed difference is `+1.01635164173607961e-8`, of which the noise difference accounts for roughly 84.1%.
+
+The `b_2` candidate set moved as follows (a bookkeeping reconstruction from the two stored label arrays, not a separately simulated sequence):
+
+| Stage | `ell=2` candidates |
+|---|---|
+| Zero-noise baseline | `(4993, 4994, gap=0)` |
+| After applying the stored `j=3116` label change | `(3115, 3116, gap=0)`, `(4993, 4994, gap=0)` |
+| After additionally applying the stored `j=4994` label change | `(3115, 3116, gap=0)` |
+
+For this one fixed stored input, the false `b_2` candidate was created at `j=3116`, the zero-noise `b_2` candidate was removed at `j=4994`, and the false candidate thereby became unique and was accepted. The same local path was reproduced in the original fixed runtime and matched the stored trace and the official raw Observer record. The resulting brackets `b_2=0.5025`, `b_3=0.9582258064516129`, `b_4=0.9909677419354839` give `delta_3=13.918719211822673`, and an independent calculation from those reproduced bracket values returned the same number.
+
+**This is a local reproducible path for one fixed stored input. It is not a root-cause proof, not a general failure mechanism, not a frequency, and not an Observer-wide safety conclusion.**
+
+Two ancillary observations, recorded without causal claims: `j=126` added a false `1 -> 2` candidate, leaving two `b_1` candidates, which is consistent with `delta_2` abstaining; and `j=5941` turned `8 -> 0`, changing the `b_3` bracket from gap 0 to gap 1. `j=5941` is not described here as a cause of the `13.9187` estimate.
+
+### 7.2 Read-only neighbourhood and fixed-20-seed candidate-set comparison
+
+After the incident path had been reproduced, a separate lightweight comparison was made from the already sealed zero-noise and B2 trace arrays. It did not generate observations, rerun the Observer, change any stored artifact, add seeds, or add sigma values. The comparison used `margin = residual - tau`, so `margin <= 0` is PASS, and retained the Observer's search order `p=1,2,4,8,16`. The term **critical-margin predicate** below means the predicate with minimum `|margin|` among those examined through the first PASS (or among all five periods if there is no PASS); it is not necessarily the first PASS itself.
+
+For seed 41014, the 6,201 grid points were partitioned mechanically as follows:
+
+| Class | Operational definition | Count |
+|---|---|---:|
+| A | Final period label changed | 4 |
+| B | Label unchanged despite a sign change at or before the first PASS | 0 |
+| C | All period-predicate PASS/FAIL signs were unchanged | 6,191 |
+| D | Label unchanged; only predicates after the first PASS changed sign | 6 |
+
+`B=0` is a consequence of this first-PASS label rule, not a newly observed robustness property: changing a sign at or before the first PASS necessarily changes where the first PASS occurs. Within C, 29 points had `|critical margin| <= 1e-9` in the incident trace. These are **near-threshold non-crossings**, not 29 observed label-flip events. The six D points were `j=419, 498, 501, 1242, 2329, 3480`; they account for the period-predicate changes hidden behind an earlier PASS.
+
+The same calculation was then applied at the same stored level, `sigma=1.6e-9`, to all 20 fixed B2 noise fields:
+
+| Seed | Label changes A | C points within `1e-9` | D points | All predicate crossings | Maximum critical-margin movement |
+|---:|---:|---:|---:|---:|---:|
+| 41001 | 4 | 27 | 15 | 21 | `1.085e-8` |
+| 41002 | 5 | 17 | 12 | 17 | `1.063e-8` |
+| 41003 | 6 | 16 | 11 | 17 | `1.146e-8` |
+| 41004 | 7 | 14 | 12 | 19 | `1.053e-8` |
+| 41005 | 3 | 17 | 11 | 16 | `1.051e-8` |
+| 41006 | 7 | 20 | 12 | 20 | `1.112e-8` |
+| 41007 | 8 | 18 | 7 | 20 | `1.131e-8` |
+| 41008 | 3 | 23 | 11 | 15 | `1.147e-8` |
+| 41009 | 6 | 23 | 14 | 21 | `1.045e-8` |
+| 41010 | 6 | 23 | 10 | 16 | `1.097e-8` |
+| 41011 | 4 | 24 | 11 | 17 | `1.068e-8` |
+| 41012 | 6 | 25 | 11 | 21 | `1.093e-8` |
+| 41013 | 7 | 24 | 18 | 26 | `1.075e-8` |
+| **41014** | **4** | **29** | **6** | **11** | **`1.093e-8`** |
+| 41015 | 6 | 14 | 15 | 21 | `1.076e-8` |
+| 41016 | 4 | 22 | 12 | 18 | `1.091e-8` |
+| 41017 | 2 | 20 | 13 | 15 | `1.003e-8` |
+| 41018 | 6 | 27 | 13 | 20 | `1.048e-8` |
+| 41019 | 7 | 24 | 7 | 15 | `1.062e-8` |
+| 41020 | 8 | 28 | 10 | 19 | `1.095e-8` |
+
+Across these fixed 20 fields, A ranged from 2 to 8 (median 6), the near-threshold C subset from 14 to 29 (median 23), D from 6 to 18 (median 11.5), and all predicate crossings from 11 to 26 (median 18.5). Seed 41014 had the largest near-threshold C subset, but it had only four label changes, the fewest D points, and the fewest predicate crossings; its maximum critical-margin movement ranked seventh. Thus the stored comparison does not support describing 41014 as simply the most broadly disrupted field.
+
+The four incident positions also separated across seeds. `j=5941` changed `8 -> 0` in all 20 fields at this sigma and was therefore not incident-specific. The label changes at `j=126`, `j=3116`, and `j=4994` occurred only in seed 41014. At `j=4994`, 14 other seeds changed only a later predicate (class D), while five retained all predicate signs.
+
+The bracket-candidate comparison used the frozen rule of locating a left label `2^(ell-1)`, skipping at most four zero labels, and accepting a following label `2^ell`. The zero-noise candidate sets were unique:
+
+| `ell` | Zero-noise candidate `(left, right, gap)` |
+|---:|---|
+| 1 | `(495, 496, 0)` |
+| 2 | `(4993, 4994, 0)` |
+| 3 | `(5940, 5941, 0)` |
+| 4 | `(6143, 6145, 1)` |
+
+Because the common `j=5941` change extends the `ell=3` bracket to `(5940, 5942, 1)`, exact tuple identity alone would misleadingly call the same local boundary a removed and newly false candidate. For this comparison, a current candidate was therefore called **zero-reference-associated** when its inclusive `[left,right]` interval overlapped the zero-noise candidate interval; candidates without such overlap were called **non-reference candidates**. This is an operational association rule, not access to physical truth.
+
+Across the 80 seed-by-`ell` cells, there were 104 exact candidate-tuple additions and 22 exact removals. Of the removals, 21 were shifts or extensions of the same zero-reference-associated boundary. There were 83 non-reference candidate additions, 35 direct `unique -> nonunique` changes, no `nonunique -> unique` changes, 79/80 cells retaining a zero-reference-associated candidate, and one cell containing only a non-reference candidate. No cell had an empty candidate set. The candidate uniqueness and midpoint reconstructed from the stored label arrays matched the stored Observer audit in 80/80 cells.
+
+The unique exceptional cell was seed 41014 at `ell=2`:
+
+```
+zero noise: {(4993, 4994, gap=0)}
+seed 41014: {(3115, 3116, gap=0)}
+```
+
+At `ell=2`, 18 other seeds retained the zero-reference-associated candidate while adding one or more non-reference candidates and therefore became nonunique; seed 41017 retained the reference candidate alone; only seed 41014 lost the reference-associated candidate while retaining a different candidate uniquely. For seed 41014, `ell=1` was nonunique because a new candidate was added while the reference-associated candidate remained, `ell=3` remained uniquely associated with the same boundary after its one-point gap extension, and `ell=4` was unchanged. The resulting `delta_3` input topology was therefore a unique non-reference `ell=2` candidate plus unique reference-associated `ell=3` and `ell=4` candidates.
+
+The directly observed endpoint change at `ell=2` is **unique reference-only -> unique non-reference-only**. The intermediate sequence `{reference} -> {reference, non-reference} -> {non-reference}` in §7.1 is explicitly a bookkeeping decomposition obtained by applying the two stored label changes in a chosen order. It is not an observed `nonunique -> unique` transition in the zero and final traces, and it does not establish temporal or causal order.
+
+These comparisons are descriptive results for one stored sigma level, one fixed payload, one Observer, and 20 fixed noise fields selected before B2. They do not turn the fields into a population sample, estimate an error probability, show that near-threshold counts caused the wrong estimate, establish a general failure mechanism, or validate a guard.
+
 ---
 
 ## 8. Reproducibility, sealing, and audit boundaries
@@ -277,7 +395,7 @@ CPython `3.13.15` / NumPy `2.3.2` (Windows, AMD64). Both B1 and B2 require exact
 ### 8.3 Audit boundaries (what is *not* guaranteed)
 
 - All sealing and cross-checking was **generated and verified within the same implementation lineage**. There has been no re-verification by an independent third-party implementation and no adversarial tamper-resistance testing.
-- The Observer's decisions have never been reproduced by an independent implementation.
+- A narrow independent calculation reproduced the local residual/label/bracket path for the stored 41014 input (§7.1), but the Observer as a whole has not been independently reimplemented or third-party verified. That checker recomputes one narrow path in separate code; it is not a complete independent reimplementation of the Observer and not a forensic examination carrying formal guarantees.
 - The diagnostic tracer is a separate module reading the same public inputs as the Observer; it is not an independent implementation.
 - **The forensic framework carrying formal guarantees (a design including Stage 1–4 approvals, a manifest chain, and a self-verifier) repeatedly ended in FAIL / HOLD and was abandoned before the incident run was ever executed.** It was then replaced by a single-shot script with a deliberately narrowed claim (§7, `INCIDENT_41014_NOTE.md`). The number of tests that passed inside the abandoned framework is not added to the scientific credibility of the incident.
 - The roughly 2 GB of per-run diagnostic trace (`diagnostic_trace_index.jsonl`) is not included in this distribution package. Its hash is recorded in `observer_trace_seal_manifest.json`.
@@ -335,6 +453,8 @@ Phase C, Phase B3, independent evaluation on new seeds, and the design, implemen
 | Phase B2 verification | `05_PHASE_B2/results/PHASE_B2_FULL_RUN_VERIFICATION_V1.json` | full-run verification `PASS` |
 | Incident | `06_INCIDENT_41014/diagnose_41014.py` | single-shot, unaudited reference diagnostic script |
 | Incident output | `result_41014.txt` | the script's stdout, saved after the fact. Source for the incident numbers |
+| Local-path reproduction | `SEED_41014_FIXED_RUNTIME_LOCAL_PATH_REPRODUCTION.txt` | record of the 2026-08-12 fixed-runtime local-path reproduction (§7.1). SHA-256 `361E1F5A951785DD6096CBD0FE7A4235C68092D65C7F32DEC21BDDF8116F6E15` |
+| Local-path checker | `SEED_41014_FIXED_RUNTIME_LOCAL_PATH_CHECK.py` | the read-only checker that produced that record. SHA-256 `68C7AD4EE3371106D60526F64C6E2C53DF26461527EA4FC729F62F602C59CEA2` |
 | Incident note | `INCIDENT_41014_NOTE.md` | post-hoc note restricted to the single case in §7 |
 | Conversation logs | `01_LOGS/log 6–8` | interpretation of Phase A/B1/B2. Not the authoritative source for any number |
 | Conversation logs | `01_LOGS/log 9–13` | history of the failed and abandoned forensic framework design |
@@ -351,14 +471,17 @@ Under ideal conditions the fixed blind Observer recovered all four finite-level 
 
 The endpoint of this study is therefore twofold: the recoverability of finite-level quantities was demonstrated, and, at the same time, **a case was measured inside a fixed design in which the structural label `ESTIMATE` assigned by the Observer did not mean that the structure itself had been recovered**.
 
+The read-only comparison at `sigma=1.6e-9` further located that case within the fixed 20 fields. Seed 41014 was not the field with the most label or predicate changes. Its distinguishing stored bracket topology was narrower: among 80 seed-by-level cells, its `ell=2` cell alone replaced the zero-reference-associated unique candidate with a unique non-reference candidate, while the comparison supplied no evidence that this topology is a population-level risk marker or general causal mechanism.
+
 All of this consists of algorithmic and operational findings for a fixed A3 payload, a fixed Observer, fixed noise fields, and fixed sigma grids. None of it demonstrates an information-theoretic limit, a population error rate, universal safety, or any new general theory.
 
 ---
 
-## Appendix (outside the main record): remaining limitations
+## 12. Reader notes (outside the main record): remaining limitations
 
-The following are not claims of the research record; they are three notes to prevent over-reading the results.
+The following are not claims of the research record; they are notes to prevent over-reading the results.
 
 1. **The precursor onset is left-censored.** B2's period-layer precursor was already detected at `1e-9`, the smallest positive sigma measured, so the true onset is `<= 1e-9`. The same traces were not recorded at B1's smaller sigma values.
-2. **The 41014 replay / Decimal diagnostic is a reference diagnostic.** It is a single-shot, unaudited diagnostic of one stored input, recorded in `result_41014.txt` (the stdout of the immediately preceding execution, saved after the fact). It concludes nothing about cause or safety (`INCIDENT_41014_NOTE.md`).
-3. **Whether this incident is specific to a single noise realization, or recurs with other seeds and other detectors, is unverified.**
+2. **The 41014 replay / Decimal diagnostic and the 41014 fixed-runtime local-path reproduction are two different things, and neither is a formal forensic examination.** The earlier one (`result_41014.txt`, `INCIDENT_41014_NOTE.md`) is a single-shot, unaudited reference diagnostic that replayed the stored input and re-evaluated the downstream arithmetic at Decimal 50/100/200 digits; it concludes nothing about cause or safety, and it is not promoted to a formal forensic result by anything in §7.1. The later one (`SEED_41014_FIXED_RUNTIME_LOCAL_PATH_REPRODUCTION.txt`, §7.1) re-executed the local path in the original fixed runtime and cross-checked it against a narrow independent calculation, the stored B2 trace, and the official raw record. Both are confined to the same one fixed stored input.
+3. **§7.1 records a local reproducible path, not a cause.** It does not establish a root cause, a general failure mechanism, a frequency, or an Observer-wide safety conclusion, and no guard or repair was validated.
+4. **Same-Observer recurrence was checked only descriptively at one stored sigma level.** At `sigma=1.6e-9`, other fixed seeds also had near-threshold points and label changes, and `j=5941` changed in all 20 fields; however, the unique non-reference-only `ell=2` topology occurred only for seed 41014. This does not test new seeds, other sigma values, other detectors, or any population frequency.
