@@ -1,0 +1,487 @@
+LOGISTIC MAP / SEED 41014 READ-ONLY SESSION DATA
+Date: 2026-08-12
+
+Purpose
+=======
+This file consolidates the four lightweight analyses performed in this session:
+
+1. Verification of near-misses other than the four changed-label points
+2. Classification of all 6,201 points in seed 41014 by proximity to a final-label change
+3. Same-sigma near-threshold comparison across the 20 fixed seeds
+4. Bracket-candidate-set comparison across all 20 seeds
+
+Scope and claim boundary
+========================
+- Condition: A3, K=6201, N=64.
+- Incident run: sigma=1.6e-9, seed=41014, run_index=74.
+- Cross-seed comparison: sigma=1.6e-9, seeds 41001..41020.
+- Period search order: p=1,2,4,8,16.
+- Threshold: tau=1e-8 in both zero-noise and incident traces.
+- Margin convention used here: margin = residual - tau.
+- PASS iff margin <= 0; FAIL iff margin > 0.
+- Only existing sealed trace arrays, zero reference, and stored Observer records were read.
+- No new simulation and no Observer rerun were performed.
+- Existing source and result artifacts were not modified.
+- Results describe a fixed payload, fixed sigma, and 20 fixed noise fields. They are not
+  population frequencies, probabilities, causal proofs, or guard-design evidence.
+
+Source artifacts used
+=====================
+diagnostic_trace_arrays.npz
+  SHA-256 6138CDD2BA4F3D760AC330169A0C934FE6534F80B6BC0924BF9F859BE5C1F991
+
+zero_noise_trace_reference.npz
+  SHA-256 48AEE6D1D2E348A202CE4E7CB59B36F2E95EA663A7DF3382F62669E6BE7B2BEC
+
+observer_records.jsonl
+  SHA-256 42E3588A9D67E65CCD5CF6DF83A50E4A8DDAE6E2AB376EEE6F5A722C383F5683
+
+The current hashes matched the existing seal records.
+
+
+======================================================================
+1. NEAR-MISSES OTHER THAN THE FOUR CHANGED-LABEL POINTS
+======================================================================
+
+1.1 Nearest point ranking across all predicates
+------------------------------------------------
+For each j, the smallest |margin| across p=1,2,4,8,16 was selected.
+
+Rank  Zero-noise: j / p / margin          Seed 41014: j / p / margin
+----  ---------------------------------   ---------------------------------
+ 1     498 /  8 / -5.308e-10             2432 /  8 / -7.606e-12
+ 2    5941 /  8 / -1.372e-9                69 /  1 / -4.141e-11
+ 3     501 / 16 / -3.442e-9              1859 /  8 / -4.199e-11
+ 4    4994 / 16 / -3.506e-9              5450 /  8 / -7.324e-11
+ 5    4993 /  2 / -8.269e-9              2329 / 16 / +7.796e-11
+ 6     497 / 16 / -8.756e-9               501 / 16 / +9.894e-11
+ 7     495 /  1 / -9.128e-9              5737 / 16 / -1.120e-10
+ 8    5940 /  4 / -9.818e-9              1893 /  8 / -1.231e-10
+ 9     496 / 16 / -9.931e-9              2696 /  2 / -1.355e-10
+10     494 /  1 / -9.965e-9              1351 /  4 / -1.424e-10
+11     502 / 16 / -9.978e-9              3199 /  4 / -1.567e-10
+12     493 /  1 / -9.999e-9              4994 /  4 / +1.635e-10
+13    4992 /  2 / -9.999e-9              2815 /  2 / -1.930e-10
+14    6143 /  8 / -1.000e-8              4536 /  4 / -2.391e-10
+15    4990 /  2 / -1.000e-8              3821 /  4 / -2.436e-10
+16    4991 /  2 / -1.000e-8              3480 /  8 / +2.778e-10
+17    5939 /  4 / -1.000e-8               971 / 16 / -3.520e-10
+18    6187 / 16 / -1.000e-8               580 /  2 / -3.719e-10
+19    4996 / 16 / -1.000e-8               872 /  2 / -3.977e-10
+20    4989 /  2 / -1.000e-8              3937 /  2 / -4.001e-10
+
+Predicate-wide near-threshold counts:
+- Zero-noise: 1 point had min_p |margin| <= 1e-9.
+- Seed 41014: 88 points had min_p |margin| <= 1e-9.
+- Many of these were later predicates occurring after an earlier PASS and therefore could
+  not affect the final label.
+
+1.2 Final-label-relevant near-threshold points
+-----------------------------------------------
+The label-relevant range is all periods through the first PASS, or all five periods if
+there is no PASS. Within that range the predicate with minimum |margin| is called the
+critical-margin predicate in this report.
+
+- Seed 41014 had 32 label-relevant points with |critical margin| <= 1e-9.
+- Three were changed-label points: j=126, 3116, 4994.
+- Twenty-nine retained their label and were near-threshold non-crossings.
+- j=5941 had +1.014e-9 and was just outside the 1e-9 band after crossing.
+- Zero-noise had no unchanged label-relevant point within 1e-9.
+
+The 29 unchanged near-threshold points:
+
+j     v          label  critical p  seed-41014 margin
+----  ---------  -----  ----------  ----------------
+  69  0.011129      1        1       -4.141e-11
+2696  0.434839      2        2       -1.355e-10
+2815  0.454032      2        2       -1.930e-10
+ 580  0.093548      2        2       -3.719e-10
+ 872  0.140645      2        2       -3.977e-10
+3937  0.635000      2        2       -4.001e-10
+4240  0.683871      2        2       -4.150e-10
+3443  0.555323      2        2       -4.212e-10
+ 877  0.141452      2        2       -4.907e-10
+ 177  0.028548      1        1       -4.981e-10
+ 269  0.043387      1        1       -5.194e-10
+2514  0.405484      2        2       -5.201e-10
+2943  0.474677      2        2       -6.496e-10
+4251  0.685645      2        2       -6.562e-10
+ 382  0.061613      1        1       -6.611e-10
+1922  0.310000      2        2       -6.773e-10
+3942  0.635806      2        2       -7.046e-10
+1581  0.255000      2        2       -7.891e-10
+5077  0.818871      4        4       -8.626e-10
+4092  0.660000      2        2       -8.807e-10
+2589  0.417581      2        2       -8.864e-10
+2564  0.413548      2        2       -8.909e-10
+3823  0.616613      2        2       -9.337e-10
+5462  0.880968      4        4       -9.455e-10
+ 920  0.148387      2        2       -9.508e-10
+6055  0.976613      8        8       -9.607e-10
+ 955  0.154032      2        2       -9.794e-10
+2911  0.469516      2        2       -9.927e-10
+2056  0.331613      2        2       -9.944e-10
+
+These are near-threshold non-crossings, not 29 observed label-flip events.
+
+1.3 The four changed-label points
+---------------------------------
+
+j=126, v=0.020322580645161289, label 1 -> 2
+  zero: first PASS p1, margin -9.9999978906e-9
+  41014: first PASS p2, margin -8.2786017457e-10
+  41014 immediately preceding p1 margin: +6.8965260753e-10
+  critical-margin change: +1.0689650498e-8
+
+j=3116, v=0.50258064516129031, label 2 -> 4
+  zero: first PASS p2, margin -1.0000000000e-8
+  41014: first PASS p4, margin -3.0718912466e-9
+  41014 immediately preceding p2 margin: +9.3442225653e-10
+  critical-margin change: +1.0934422257e-8
+
+j=4994, v=0.80548387096774199, label 4 -> 8
+  zero: first PASS p4, margin -8.3743533272e-9
+  41014: first PASS p8, margin -5.0178356441e-10
+  41014 immediately preceding p4 margin: +1.6351641736e-10
+  critical-margin change: +8.5378697445e-9
+
+j=5941, v=0.95822580645161293, label 8 -> 0
+  zero: first PASS p8, margin -1.3720257760e-9
+  41014: no PASS; minimum margin p8, +1.0141967768e-9
+  critical-margin change: +2.3862225529e-9
+
+Interpretive separation:
+- j=126 and j=3116 were driven by the two largest critical-margin changes in the run.
+- j=4994 had a substantial change that nearly exactly exhausted its zero-noise margin.
+- j=5941 had a comparatively small change but began close to the threshold.
+
+1.4 Hidden predicate crossings
+------------------------------
+Across all 31,005 j,p predicates there were 11 PASS/FAIL changes at 10 points.
+All were PASS -> FAIL; none were FAIL -> PASS.
+
+- Five predicate crossings belonged to the four changed-label points.
+- Six occurred only after an earlier period had already PASSed and did not alter the label.
+
+j     label  later predicate  zero margin -> 41014 margin
+----  -----  ---------------  ---------------------------
+ 419    1       p4            -1.000e-8 -> +4.684e-10
+ 498    2       p8            -5.308e-10 -> +4.142e-9
+ 501    2       p16           -3.442e-9 -> +9.894e-11
+1242    2       p16           -1.000e-8 -> +1.058e-9
+2329    2       p16           -1.000e-8 -> +7.796e-11
+3480    2       p8            -1.000e-8 -> +2.778e-10
+
+
+======================================================================
+2. CLASSIFICATION OF ALL 6,201 POINTS IN SEED 41014
+======================================================================
+
+2.1 Mechanical classification
+-----------------------------
+The groups were made mutually exclusive using this precedence:
+
+A. Final label changed.
+B. Final label unchanged but a PASS/FAIL sign changed at or before the first PASS.
+D. Final label unchanged and only a predicate after the first PASS changed sign.
+C. Remaining points; all predicate signs were stable.
+
+C-near is a subset of C with |critical margin| <= 1e-9 in zero or seed 41014.
+
+Group       Count
+----------  -----
+A               4
+B               0
+C            6191
+  C-near       29
+D               6
+Total        6201
+
+B=0 follows from the first-PASS rule: if a predicate at or before the first PASS changes
+sign, the location of the first PASS and therefore the final label must change.
+
+2.2 A-group positions
+---------------------
+j=126   label 1->2
+j=3116  label 2->4
+j=4994  label 4->8
+j=5941  label 8->0
+
+2.3 D-group positions
+---------------------
+j=419, 498, 501, 1242, 2329, 3480.
+This exactly matches the six hidden predicate crossings listed in section 1.4.
+
+2.4 Critical-margin movement ranking in seed 41014
+--------------------------------------------------
+Ranking quantity: |critical_margin_41014 - critical_margin_zero|.
+
+Rank  j     Group  label       critical p  zero -> 41014                  delta
+----  ----  -----  ----------  ----------  -----------------------------  -----------
+ 1    3116    A       2->4         2       -1.000e-8 -> +9.344e-10        +1.093e-8
+ 2     126    A       1->2         1       -1.000e-8 -> +6.897e-10        +1.069e-8
+ 3      69    C       1->1         1       -1.000e-8 -> -4.141e-11        +9.959e-9
+ 4    2696    C       2->2         2       -1.000e-8 -> -1.355e-10        +9.865e-9
+ 5    2815    C       2->2         2       -1.000e-8 -> -1.930e-10        +9.807e-9
+ 6     580    C       2->2         2       -1.000e-8 -> -3.719e-10        +9.628e-9
+ 7     872    C       2->2         2       -1.000e-8 -> -3.977e-10        +9.602e-9
+ 8    3937    C       2->2         2       -1.000e-8 -> -4.001e-10        +9.600e-9
+ 9    4240    C       2->2         2       -1.000e-8 -> -4.150e-10        +9.585e-9
+10    3443    C       2->2         2       -1.000e-8 -> -4.212e-10        +9.579e-9
+11     877    C       2->2         2       -1.000e-8 -> -4.907e-10        +9.509e-9
+12     177    C       1->1         1       -1.000e-8 -> -4.981e-10        +9.502e-9
+13     269    C       1->1         1       -1.000e-8 -> -5.194e-10        +9.481e-9
+14    2514    C       2->2         2       -1.000e-8 -> -5.201e-10        +9.480e-9
+15    2943    C       2->2         2       -1.000e-8 -> -6.496e-10        +9.350e-9
+16    4251    C       2->2         2       -1.000e-8 -> -6.562e-10        +9.344e-9
+17     382    C       1->1         1       -1.000e-8 -> -6.611e-10        +9.339e-9
+18    1922    C       2->2         2       -1.000e-8 -> -6.773e-10        +9.323e-9
+19    3942    C       2->2         2       -1.000e-8 -> -7.046e-10        +9.295e-9
+20    1581    C       2->2         2       -1.000e-8 -> -7.891e-10        +9.211e-9
+
+Special-point ranks among all 6,201 points:
+j=3116: rank 1
+j=126:  rank 2
+j=4994: rank 67
+j=5941: rank 6194
+
+2.5 Positions along the v axis
+--------------------------------
+C* means C-near.
+
+0.011 C*  0.020 A  0.029 C*  0.043 C*  0.062 C*  0.068 D
+0.080 D   0.081 D  0.094 C*  0.141 C*  0.141 C*  0.148 C*
+0.154 C*  0.200 D  0.255 C*  0.310 C*  0.332 C*  0.376 D
+0.405 C*  0.414 C* 0.418 C*  0.435 C*  0.454 C*  0.470 C*
+0.475 C*  0.503 A  0.555 C*  0.561 D  0.617 C*  0.635 C*
+0.636 C*  0.660 C* 0.684 C*  0.686 C*  0.805 A   0.819 C*
+0.881 C*  0.958 A  0.977 C*
+
+
+======================================================================
+3. SAME-SIGMA NEAR-THRESHOLD COMPARISON ACROSS 20 SEEDS
+======================================================================
+
+All rows use sigma=1.6e-9 and the same zero-noise reference and classification rules.
+B=0 for every seed.
+
+seed   A     C     D  C-near  predicate crossings  max |critical delta|
+-----  --  ----  ---  ------  -------------------  --------------------
+41001   4  6182   15      27          21              1.085e-8
+41002   5  6184   12      17          17              1.063e-8
+41003   6  6184   11      16          17              1.146e-8
+41004   7  6182   12      14          19              1.053e-8
+41005   3  6187   11      17          16              1.051e-8
+41006   7  6182   12      20          20              1.112e-8
+41007   8  6186    7      18          20              1.131e-8
+41008   3  6187   11      23          15              1.147e-8
+41009   6  6181   14      23          21              1.045e-8
+41010   6  6185   10      23          16              1.097e-8
+41011   4  6186   11      24          17              1.068e-8
+41012   6  6184   11      25          21              1.093e-8
+41013   7  6176   18      24          26              1.075e-8
+41014   4  6191    6      29          11              1.093e-8
+41015   6  6180   15      14          21              1.076e-8
+41016   4  6185   12      22          18              1.091e-8
+41017   2  6186   13      20          15              1.003e-8
+41018   6  6182   13      27          20              1.048e-8
+41019   7  6187    7      24          15              1.062e-8
+41020   8  6183   10      28          19              1.095e-8
+
+Ranges and medians across the fixed 20 seeds:
+- A: range 2..8, median 6, mean 5.45.
+- C-near: range 14..29, median 23, mean 21.75.
+- D: range 6..18, median 11.5, mean 11.55.
+- Predicate crossings: range 11..26, median 18.5, mean 18.25.
+- Maximum critical-margin movement: 1.003e-8..1.147e-8, median 1.080e-8.
+
+Seed 41014 ranking:
+- C-near 29: rank 1, unique maximum.
+- A=4: positions 14..17 in a four-way tie.
+- D=6: rank 20, unique minimum.
+- Predicate crossings=11: rank 20, unique minimum.
+- Maximum critical-margin movement: rank 7.
+- 95th percentile movement: rank 4.
+- Median movement: rank 17.
+
+Thus 41014 was not the seed with the most label changes or predicate crossings. It had
+the largest number of near-threshold non-crossings, but comparatively few crossings.
+
+3.1 Repetition of the four seed-41014 A positions
+--------------------------------------------------
+- j=5941: label 8->0 in all 20/20 seeds.
+- j=126: label change occurred only in seed 41014.
+- j=3116: label change occurred only in seed 41014.
+- j=4994: label change occurred only in seed 41014; it was a D-point in 14 other seeds
+  and fully sign-stable in the remaining 5 seeds.
+
+Across all seeds there were 109 label-change instances at 86 distinct j positions.
+
+Label transition  Count
+----------------  -----
+1 -> 2                7
+2 -> 0                1
+2 -> 4               62
+2 -> 8                2
+2 -> 16               1
+4 -> 8               11
+8 -> 0               20
+8 -> 16               5
+
+Position recurrence:
+- j=5941 occurred in all 20 seeds.
+- Four positions occurred in two seeds each.
+- Eighty-one positions occurred in only one seed each.
+
+
+======================================================================
+4. BRACKET-CANDIDATE-SET COMPARISON ACROSS ALL 20 SEEDS
+======================================================================
+
+4.1 Candidate rule and reference association
+--------------------------------------------
+For each ell=1,2,3,4, the bracket candidate rule searches for a left label 2^(ell-1),
+then skips at most four zero labels, and accepts a following right label 2^ell.
+A candidate is stored as (left_index,right_index,gap).
+
+Zero-noise candidates:
+ell=1: (495,496,0)
+ell=2: (4993,4994,0)
+ell=3: (5940,5941,0)
+ell=4: (6143,6145,1)
+
+All four zero-noise candidate sets were unique.
+
+For semantic/reference association, a current candidate was treated as corresponding to
+the zero-reference boundary if its inclusive [left,right] interval overlapped the zero
+candidate interval. This keeps the universal ell=3 shift caused by j=5941 associated
+with the same boundary instead of misclassifying it as a false boundary.
+
+4.2 Per-seed candidate summary
+------------------------------
+"Exact +" and "Exact -" are tuple-set additions and removals.
+"Other +" counts candidates that do not overlap the zero-reference candidate interval.
+U->N is unique-to-nonunique. N->U is zero for every row.
+
+seed   Exact+  Exact-  Other+  U->N  N->U  reference retained  false-only levels
+-----  ------  ------  ------  ----  ----  ------------------  -----------------
+41001      4       1       3      1     0          4/4                 0
+41002      5       1       4      1     0          4/4                 0
+41003      6       2       4      2     0          4/4                 0
+41004      7       1       6      3     0          4/4                 0
+41005      3       1       2      1     0          4/4                 0
+41006      7       1       6      2     0          4/4                 0
+41007      6       1       5      2     0          4/4                 0
+41008      3       1       2      1     0          4/4                 0
+41009      6       1       5      2     0          4/4                 0
+41010      6       1       5      2     0          4/4                 0
+41011      4       1       3      2     0          4/4                 0
+41012      5       1       4      2     0          4/4                 0
+41013      7       1       6      2     0          4/4                 0
+41014      3       2       2      1     0          3/4                 1
+41015      6       1       5      3     0          4/4                 0
+41016      4       1       3      1     0          4/4                 0
+41017      2       1       1      1     0          4/4                 0
+41018      6       1       5      1     0          4/4                 0
+41019      6       1       5      3     0          4/4                 0
+41020      8       1       7      2     0          4/4                 0
+
+Totals across 80 seed-by-ell cells:
+- Exact tuple additions: 104.
+- Exact tuple removals: 22.
+- Other/non-reference candidate additions: 83.
+- Unique -> nonunique: 35 cells.
+- Nonunique -> unique: 0 cells, because the zero baseline was unique in all cells.
+- Reference-associated candidate retained: 79/80 cells.
+- False-only: 1/80 cells.
+- Unique false-only: 1/80 cells.
+- Empty candidate sets: 0 cells.
+
+Of the 22 exact tuple removals, 21 were shifts/extensions of the same reference boundary.
+Only one cell actually lost the reference-associated boundary: seed 41014, ell=2.
+
+4.3 Aggregate by ell
+--------------------
+
+ell  Exact+  Exact-  Other+  U->N  reference retained  false-only
+---  ------  ------  ------  ----  ------------------  ----------
+ 1       7       1       6      5         20/20             0
+ 2      62       1      62     18         19/20             1
+ 3      30      20      10      7         20/20             0
+ 4       5       0       5      5         20/20             0
+
+The ell=2 topology across the 20 seeds was:
+- 18 seeds: reference candidate retained and one or more other candidates added,
+  giving unique -> nonunique.
+- Seed 41017: no added ell=2 candidate; reference remained uniquely selected.
+- Seed 41014: reference candidate disappeared and another candidate remained uniquely.
+
+4.4 Seed 41014 wiring diagram
+--------------------------------
+ell=1
+  zero:  {(495,496,0)}
+  41014: {(125,126,0), (495,496,0)}
+  Effect: other candidate added, reference retained, unique -> nonunique.
+
+ell=2
+  zero:  {(4993,4994,0)}
+  41014: {(3115,3116,0)}
+  Effect: candidate at j=3116 added, reference candidate ending at j=4994 removed,
+          unique reference-only -> unique false-only.
+
+ell=3
+  zero:  {(5940,5941,0)}
+  41014: {(5940,5942,1)}
+  Effect: same reference boundary extended across one zero label; still unique.
+
+ell=4
+  zero:  {(6143,6145,1)}
+  41014: {(6143,6145,1)}
+  Effect: unchanged and unique.
+
+For delta_3, which uses ell=2,3,4, the final stored topology was therefore:
+
+  ell=2: unique false candidate
+  ell=3: unique reference-associated candidate
+  ell=4: unique reference candidate
+
+This satisfied the local uniqueness checks and allowed the stored wrong delta_3 estimate.
+
+Important endpoint-comparison limit:
+The direct observed transition is unique reference-only -> unique false-only at ell=2.
+No stored nonunique intermediate state was observed. The sequence
+{reference} -> {reference,false} -> {false} is a counterfactual ordering of the two local
+changes, not a state recorded by the zero and final traces.
+
+4.5 Reconstruction check
+------------------------
+The candidate uniqueness and candidate midpoints reconstructed from the stored label
+arrays matched the stored Observer audit fields for all 20 seeds x 4 ell levels:
+
+  80/80 MATCH
+
+
+======================================================================
+CONSOLIDATED LIMITED CONCLUSION
+======================================================================
+
+Within this fixed sigma and these 20 fixed seeds:
+
+1. Seed 41014 was not the most broadly disrupted seed. It had the fewest total predicate
+   crossings and the fewest D events, while having the most near-threshold non-crossings.
+
+2. j=5941 was a common fragile point: it changed 8->0 in all 20 seeds. It was not specific
+   to the wrong-estimate incident.
+
+3. The label changes at j=126, j=3116, and j=4994 occurred only in seed 41014 at this
+   sigma. Their bracket effects were different.
+
+4. Other seeds commonly added false bracket candidates while retaining the reference
+   candidate. This produced nonuniqueness rather than false unique selection.
+
+5. Seed 41014, ell=2 was the only one of 80 seed-by-ell cells where the reference candidate
+   was absent and a non-reference candidate was the sole remaining candidate.
+
+6. These data support a stored endpoint description of a candidate-set substitution in
+   one fixed run. They do not establish the dynamical cause, an event probability, a
+   general failure mechanism, or the effectiveness of any new guard.
